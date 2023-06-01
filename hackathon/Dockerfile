@@ -1,8 +1,9 @@
 FROM golang:1.18 as build
 
-WORKDIR /go/src/app
+WORKDIR /app
 COPY . .
-
-CMD ["go", "run", "main.go"]
+RUN go mod download
+RUN go build -o /app
+CMD ["/app"]
 
 EXPOSE 8080

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/oklog/ulid"
 	"log"
 	"math/rand"
@@ -13,25 +14,38 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/oklog/ulid"
 )
 
-type UserResForHTTPGet struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	Age  int    `json:"age"`
-}
-type UserResForHTTPPost struct {
-	Id string `json:"id"`
+type User struct {
+	Id    string `json:"id"`
+	Name  string `json:"id"`
+	Email string `json:"id"`
 }
 
-// ① GoプログラムからMySQLへ接続
+type Channel struct {
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"name"`
+}
+
+type ChannelUser struct {
+	Id        string `json:"id"`
+	ChannelId string `json:"channel_id"`
+	UserId    string `json:"user_id"`
+}
+
+type Message struct {
+	Id        string `json:"id"`
+	ChannelId string `json:"channel_id"`
+	UserId    string `json:"user_id"`
+	Content   string `json:"content"`
+}
+
 var db *sql.DB
 
 func init() {
 	// ①-1
-	// DB接続のための準備
 	mysqlUser := os.Getenv("MYSQL_USER")
 	mysqlPwd := os.Getenv("MYSQL_PWD")
 	mysqlHost := os.Getenv("MYSQL_HOST")
@@ -39,8 +53,6 @@ func init() {
 
 	connStr := fmt.Sprintf("%s:%s@%s/%s", mysqlUser, mysqlPwd, mysqlHost, mysqlDatabase)
 	_db, err := sql.Open("mysql", connStr)
-
-	// ①-2
 	if err != nil {
 		log.Fatalf("fail: sql.Open, %v\n", err)
 	}
@@ -51,53 +63,46 @@ func init() {
 	db = _db
 }
 
-// ② /userでリクエストされたらnameパラメーターと一致する名前を持つレコードをJSON形式で返す
-func handler(w http.ResponseWriter, r *http.Request) {
+func main() {
+	//新規登録でuserテーブルに追加
+	http.HandleFunc("/register", addUserHandler)
+	//mypage上でchannelのnameとidを受け取る
+	http.HandleFunc("/mypage", getMypageHandler)
+	//Get:channel_idからmessageを表示
+	//Post:channle_idからmessageを追加
+	http.HandleFunc("/channel", messageHandler)
+	//messageを編集
+	http.HandleFunc("/edit", editMessageHnadler)
+	//messageを削除
+	http.HandleFunc("/delete", deleteMessageHandler)
+	closeDBWithSysCall()
+
+	// 8000番ポートでリクエストを待ち受ける
+	log.Println("Listening...")
+	if err := http.ListenAndServe(":8000", nil); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func closeDBWithSysCall() {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		s := <-sig
+		log.Printf("received syscall, %v", s)
+
+		if err := db.Close(); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("success: db.Close()")
+		os.Exit(0)
+	}()
+}
+
+func addUserHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case http.MethodGet:
-		// ②-1
-		name := r.URL.Query().Get("name") // To be filled
-		if name == "" {
-			log.Println("fail: name is empty")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		// ②-2
-		rows, err := db.Query("SELECT id, name, age FROM user WHERE name = ?", name)
-		if err != nil {
-			log.Printf("fail: db.Query, %v\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		// ②-3
-		users := make([]UserResForHTTPGet, 0)
-		for rows.Next() {
-			var u UserResForHTTPGet
-			if err := rows.Scan(&u.Id, &u.Name, &u.Age); err != nil {
-				log.Printf("fail: rows.Scan, %v\n", err)
-
-				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
-					log.Printf("fail: rows.Close(), %v\n", err)
-				}
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			users = append(users, u)
-		}
-
-		// ②-4
-		bytes, err := json.Marshal(users)
-		if err != nil {
-			log.Printf("fail: json.Marshal, %v\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
 	case http.MethodPost:
-		var user UserResForHTTPGet
+		var user User
 		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 			fmt.Println(err)
 			return
@@ -105,19 +110,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		t := time.Now()
 		entropy := ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0)
 		id := ulid.MustNew(ulid.Timestamp(t), entropy)
-		if user.Name == "" || len(user.Name) > 50 {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		if user.Age > 80 || user.Age < 20 {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
 		tx, er := db.Begin()
 		if er != nil {
 			log.Fatal(er)
 		}
-		_, err := db.Query("INSERT INTO user (id, name, age) VALUES (?, ?, ?);", id.String(), user.Name, user.Age)
+		_, err := db.Query("INSERT INTO user (id, name, email) VALUES (?, ?, ?);", id.String(), user.Name, user.Email)
 		if err != nil {
 			log.Println("insert error")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -126,7 +123,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 		tx.Commit()
 		log.Printf("id: %v\n", id.String())
-		s := UserResForHTTPPost{
+		s := User{
 			Id: id.String(),
 		}
 		ans, err := json.Marshal(s)
@@ -145,32 +142,195 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
-	// ② /userでリクエストされたらnameパラメーターと一致する名前を持つレコードをJSON形式で返す
-	http.HandleFunc("/user", handler)
+func getMypageHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		email := r.URL.Query().Get("email")
+		rows, err := db.Query("SELECT id, name, email FROM user WHERE email = ?", email)
+		if err != nil {
+			log.Printf("fail: db.Query, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		var u User
+		for rows.Next() {
+			if err := rows.Scan(&u.Id, &u.Name, &u.Email); err != nil {
+				log.Printf("fail: rows.Scan, %v\n", err)
 
-	// ③ Ctrl+CでHTTPサーバー停止時にDBをクローズする
-	closeDBWithSysCall()
+				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+					log.Printf("fail: rows.Close(), %v\n", err)
+				}
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			break
+		}
 
-	// 8000番ポートでリクエストを待ち受ける
-	log.Println("Listening...")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal(err)
+		rows2, err := db.Query("SELECT id, channel_id FROM channel_members WHERE user_id = ?", u.Id)
+		if err != nil {
+			log.Printf("fail: db.Query, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		channels := make([]Channel, 0)
+		for rows2.Next() {
+			var cu ChannelUser
+			if err := rows.Scan(&cu.Id, &cu.ChannelId); err != nil {
+				log.Printf("fail: rows.Scan, %v\n", err)
+
+				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+					log.Printf("fail: rows.Close(), %v\n", err)
+				}
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			rows3, err := db.Query("SELECT id, name, description FROM channel WHERE id = ?", cu.ChannelId)
+			if err != nil {
+				log.Printf("fail: db.Query, %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			var c Channel
+			for rows3.Next() {
+				if err := rows.Scan(&c.Id, &c.Name, &c.Description); err != nil {
+					log.Printf("fail: rows.Scan, %v\n", err)
+
+					if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+						log.Printf("fail: rows.Close(), %v\n", err)
+					}
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				channels = append(channels, c)
+			}
+		}
+
+		bytes, err := json.Marshal(channels)
+		if err != nil {
+			log.Printf("fail: json.Marshal, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(bytes)
 	}
 }
 
-// ③ Ctrl+CでHTTPサーバー停止時にDBをクローズする
-func closeDBWithSysCall() {
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		s := <-sig
-		log.Printf("received syscall, %v", s)
-
-		if err := db.Close(); err != nil {
-			log.Fatal(err)
+func messageHandler(w http.ResponseWriter, r *http.Request) {
+	channelId := r.URL.Query().Get("channelId")
+	switch r.Method {
+	case http.MethodGet:
+		rows, err := db.Query("SELECT id, channel_id, user_id, content FROM message WHERE channel_id = ?", channelId)
+		if err != nil {
+			log.Printf("fail: db.Query, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
-		log.Printf("success: db.Close()")
-		os.Exit(0)
-	}()
+		messages := make([]Message, 0)
+		for rows.Next() {
+			var m Message
+			if err := rows.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content); err != nil {
+				log.Printf("fail: rows.Scan, %v\n", err)
+
+				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+					log.Printf("fail: rows.Close(), %v\n", err)
+				}
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			messages = append(messages, m)
+		}
+		bytes, err := json.Marshal(messages)
+		if err != nil {
+			log.Printf("fail: json.Marshal, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(bytes)
+	case http.MethodPost:
+		email := r.URL.Query().Get("email")
+		rows, err := db.Query("SELECT id, name, email FROM user WHERE email = ?", email)
+		if err != nil {
+			log.Printf("fail: db.Query, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		var u User
+		for rows.Next() {
+			if err := rows.Scan(&u.Id, &u.Name, &u.Email); err != nil {
+				log.Printf("fail: rows.Scan, %v\n", err)
+
+				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+					log.Printf("fail: rows.Close(), %v\n", err)
+				}
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			break
+		}
+		var content string
+		if err := json.NewDecoder(r.Body).Decode(&content); err != nil {
+			fmt.Println(err)
+			return
+		}
+		t := time.Now()
+		entropy := ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0)
+		id := ulid.MustNew(ulid.Timestamp(t), entropy)
+		tx, er := db.Begin()
+		if er != nil {
+			log.Fatal(er)
+		}
+		_, err = db.Query("INSERT INTO message (id, channel_id, user_id, content) VALUES (?, ?, ?, ?)", id.String(), channelId, u.Id, content)
+		if err != nil {
+			log.Printf("fail: db.Query, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		tx.Commit()
+	default:
+		log.Printf("fail: HTTP Method is %s\n", r.Method)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+}
+
+func editMessageHnadler(w http.ResponseWriter, r *http.Request) {
+	var m Message
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		fmt.Println(err)
+		return
+	}
+	tx, er := db.Begin()
+	if er != nil {
+		log.Fatal(er)
+	}
+	_, err := db.Query("UPDATE message SET content = ? WHERE id = ?", m.Content+"(編集済み)", m.Id)
+	if err != nil {
+		log.Println("insert error")
+		w.WriteHeader(http.StatusInternalServerError)
+		tx.Rollback()
+		return
+	}
+	tx.Commit()
+}
+
+func deleteMessageHandler(w http.ResponseWriter, r *http.Request) {
+	var m Message
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		fmt.Println(err)
+		return
+	}
+	tx, er := db.Begin()
+	if er != nil {
+		log.Fatal(er)
+	}
+	_, err := db.Query("DELETE FROM message WHERE id = ?", m.Id)
+	if err != nil {
+		log.Println("insert error")
+		w.WriteHeader(http.StatusInternalServerError)
+		tx.Rollback()
+		return
+	}
+	tx.Commit()
 }

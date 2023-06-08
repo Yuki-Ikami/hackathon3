@@ -98,9 +98,9 @@ func main() {
 
 	closeDBWithSysCall()
 
-	// 8000番ポートでリクエストを待ち受ける
+	// 8080番ポートでリクエストを待ち受ける
 	log.Println("Listening...")
-	if err := http.ListenAndServe(":8000", nil); err != nil {
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
 }

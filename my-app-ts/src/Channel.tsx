@@ -41,7 +41,7 @@ const Channel: React.FC = () => {
       }
 
     try {
-      const result = await fetch(`http://localhost:8000/channel?channelId=${channel_id}&email=${email}`, {
+      const result = await fetch(`http://localhost:8080/channel?channelId=${channel_id}&email=${email}`, {
         method: "POST",
         body: JSON.stringify({
           content: postMessage
@@ -67,7 +67,7 @@ const Channel: React.FC = () => {
     }
 
     try {
-      const result = await fetch("http://localhost:8000/edit", {
+      const result = await fetch("http://localhost:8080/edit", {
         method: "EDIT",
         body: JSON.stringify({
           id: editId,
@@ -95,7 +95,7 @@ const Channel: React.FC = () => {
     }
 
     try {
-      const result = await fetch("http://localhost:8000/delete", {
+      const result = await fetch("http://localhost:8080/delete", {
         method: "DELETE",
         body: JSON.stringify({
           id: deleteId,
@@ -130,7 +130,7 @@ const Channel: React.FC = () => {
 
   const fetchChannels = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/message?channelId=${channel_id}?email=${email}`);
+      const res = await fetch(`http://localhost:8080/message?channelId=${channel_id}?email=${email}`);
       if (!res.ok) {
         throw Error(`Failed to fetch users: ${res.status}`);
       }

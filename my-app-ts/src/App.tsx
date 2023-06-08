@@ -12,8 +12,8 @@ const App: React.FC = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/:email" element={<Mypage />} />
+          <Route path="/" element={<Login />} />
+          <Route path="/mypage/:email" element={<Mypage />} />
           <Route path="/channel/:channel_id/:email" element={<Channel />} />
         </Routes>
       </BrowserRouter>

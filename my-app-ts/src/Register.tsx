@@ -61,7 +61,7 @@ const Register: React.FC = () => {
   return (
     <>
       {user ? (
-        <Navigate to={`/${user.email}`} />
+        <Navigate to={`/mypage/${user.email}`} />
       ) : (
         <>
           <h1>新規登録</h1>

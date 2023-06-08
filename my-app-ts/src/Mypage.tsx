@@ -37,7 +37,7 @@ const Mypage: React.FC = () => {
 
   const logout = async () => {
     await signOut(auth);
-    navigate("/login/");
+    navigate("/");
   };
 
   /*const fetchMessages = async () => {
@@ -79,7 +79,7 @@ const Mypage: React.FC = () => {
       {!loading && (
         <>
           {!user ? (
-            <Navigate to={`/login/`} />
+            <Navigate to={`/`} />
           ) : (
             <>
               <h1>マイページ</h1>

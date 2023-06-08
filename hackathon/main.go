@@ -14,7 +14,6 @@ import (
 	_ "strings"
 	"syscall"
 	"time"
-<<<<<<< HEAD
 )
 
 type User struct {
@@ -83,7 +82,6 @@ func init() {
 	db = _db
 }
 
-<<<<<<< HEAD
 func main() {
 	//新規登録でuserテーブルに追加
 	http.HandleFunc("/register", addUserHandler)
@@ -102,7 +100,7 @@ func main() {
 
 	// 8000番ポートでリクエストを待ち受ける
 	log.Println("Listening...")
-	if err := http.ListenAndServe(":8000", nil); err != nil {
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -123,10 +121,6 @@ func closeDBWithSysCall() {
 }
 
 func addUserHandler(w http.ResponseWriter, r *http.Request) {
-=======
-// ② /userでリクエストされたらnameパラメーターと一致する名前を持つレコードをJSON形式で返す
-func handler(w http.ResponseWriter, r *http.Request) {
->>>>>>> main
 	switch r.Method {
 	case http.MethodGet:
 		// ②-1
@@ -171,11 +165,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(bytes)
 	case http.MethodPost:
-<<<<<<< HEAD
 		var user User2
-=======
-		var user UserResForHTTPGet
->>>>>>> main
 		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 			fmt.Println(err)
 			return
@@ -195,11 +185,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if er != nil {
 			log.Fatal(er)
 		}
-<<<<<<< HEAD
 		_, err := db.Query("INSERT INTO user (id, name, email, password) VALUES (?, ?, ?, ?);", id.String(), user.Name, user.Email, user.Password)
-=======
-		_, err := db.Query("INSERT INTO user (id, name, age) VALUES (?, ?, ?);", id.String(), user.Name, user.Age)
->>>>>>> main
 		if err != nil {
 			log.Println("insert error")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -227,7 +213,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-<<<<<<< HEAD
 func getMypageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -238,19 +223,6 @@ func getMypageHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("fail: db.Query, %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-=======
-func main() {
-	// ② /userでリクエストされたらnameパラメーターと一致する名前を持つレコードをJSON形式で返す
-	http.HandleFunc("/user", handler)
-
-	// ③ Ctrl+CでHTTPサーバー停止時にDBをクローズする
-	closeDBWithSysCall()
-
-	// 8000番ポートでリクエストを待ち受ける
-	log.Println("Listening...")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal(err)
->>>>>>> main
 	}
 	var u User
 	for rows.Next() {
@@ -355,7 +327,6 @@ func getMessage(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-<<<<<<< HEAD
 func messageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -374,20 +345,9 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 			var m Message
 			if err := rows.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content); err != nil {
 				log.Printf("fail: rows.Scan, %v\n", err)
-=======
-// ③ Ctrl+CでHTTPサーバー停止時にDBをクローズする
-func closeDBWithSysCall() {
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		s := <-sig
-		log.Printf("received syscall, %v", s)
->>>>>>> main
-
 		if err := db.Close(); err != nil {
 			log.Fatal(err)
 		}
-<<<<<<< HEAD
 		bytes, err := json.Marshal(messages)
 		if err != nil {
 			log.Printf("fail: json.Marshal, %v\n", err)
@@ -491,9 +451,4 @@ func deleteMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tx.Commit()
-=======
-		log.Printf("success: db.Close()")
-		os.Exit(0)
-	}()
->>>>>>> main
 }

@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Register from "./Register";
 import Login from "./Login";
 import Mypage from "./Mypage";
+import Channel from "./Channel";
+
 
 const App: React.FC = () => {
   return (
@@ -11,7 +13,8 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Mypage />} />
+          <Route path="/:email" element={<Mypage />} />
+          <Route path="/channel/:channel_id/:email" element={<Channel />} />
         </Routes>
       </BrowserRouter>
     </div>

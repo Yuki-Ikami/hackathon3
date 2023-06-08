@@ -6,27 +6,33 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/oklog/ulid"
+	_ "github.com/oklog/ulid"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
+	_ "strings"
 	"syscall"
 	"time"
-
-	_ "github.com/oklog/ulid"
 )
 
 type User struct {
 	Id    string `json:"id"`
-	Name  string `json:"id"`
-	Email string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type User2 struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type Channel struct {
 	Id          string `json:"id"`
 	Name        string `json:"name"`
-	Description string `json:"name"`
+	Description string `json:"description"`
 }
 
 type ChannelUser struct {
@@ -42,17 +48,28 @@ type Message struct {
 	Content   string `json:"content"`
 }
 
+type postMessage struct {
+	Content string `json:"content"`
+}
+
+type deleteId struct {
+	Id string `json:"id"`
+}
+
+type Edit struct {
+	Id      string `json:"id"`
+	Message string `json:"message"`
+}
+
 var db *sql.DB
 
 func init() {
-	// ①-1
-	mysqlUser := os.Getenv("MYSQL_USER")
-	mysqlPwd := os.Getenv("MYSQL_PWD")
-	mysqlHost := os.Getenv("MYSQL_HOST")
-	mysqlDatabase := os.Getenv("MYSQL_DATABASE")
+	mysqlUser := "test_user"
+	mysqlUserPwd := "password"
+	mysqlDatabase := "test_database"
 
-	connStr := fmt.Sprintf("%s:%s@%s/%s", mysqlUser, mysqlPwd, mysqlHost, mysqlDatabase)
-	_db, err := sql.Open("mysql", connStr)
+	// ①-2
+	_db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@(localhost:3306)/%s", mysqlUser, mysqlUserPwd, mysqlDatabase))
 	if err != nil {
 		log.Fatalf("fail: sql.Open, %v\n", err)
 	}
@@ -68,6 +85,7 @@ func main() {
 	http.HandleFunc("/register", addUserHandler)
 	//mypage上でchannelのnameとidを受け取る
 	http.HandleFunc("/mypage", getMypageHandler)
+	http.HandleFunc("/message", getMessage)
 	//Get:channel_idからmessageを表示
 	//Post:channle_idからmessageを追加
 	http.HandleFunc("/channel", messageHandler)
@@ -75,6 +93,7 @@ func main() {
 	http.HandleFunc("/edit", editMessageHnadler)
 	//messageを削除
 	http.HandleFunc("/delete", deleteMessageHandler)
+
 	closeDBWithSysCall()
 
 	// 8000番ポートでリクエストを待ち受ける
@@ -102,7 +121,7 @@ func closeDBWithSysCall() {
 func addUserHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		var user User
+		var user User2
 		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 			fmt.Println(err)
 			return
@@ -114,7 +133,7 @@ func addUserHandler(w http.ResponseWriter, r *http.Request) {
 		if er != nil {
 			log.Fatal(er)
 		}
-		_, err := db.Query("INSERT INTO user (id, name, email) VALUES (?, ?, ?);", id.String(), user.Name, user.Email)
+		_, err := db.Query("INSERT INTO user (id, name, email, password) VALUES (?, ?, ?, ?);", id.String(), user.Name, user.Email, user.Password)
 		if err != nil {
 			log.Println("insert error")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -143,80 +162,123 @@ func addUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMypageHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		email := r.URL.Query().Get("email")
-		rows, err := db.Query("SELECT id, name, email FROM user WHERE email = ?", email)
-		if err != nil {
-			log.Printf("fail: db.Query, %v\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		var u User
-		for rows.Next() {
-			if err := rows.Scan(&u.Id, &u.Name, &u.Email); err != nil {
-				log.Printf("fail: rows.Scan, %v\n", err)
-
-				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
-					log.Printf("fail: rows.Close(), %v\n", err)
-				}
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			break
-		}
-
-		rows2, err := db.Query("SELECT id, channel_id FROM channel_members WHERE user_id = ?", u.Id)
-		if err != nil {
-			log.Printf("fail: db.Query, %v\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		channels := make([]Channel, 0)
-		for rows2.Next() {
-			var cu ChannelUser
-			if err := rows.Scan(&cu.Id, &cu.ChannelId); err != nil {
-				log.Printf("fail: rows.Scan, %v\n", err)
-
-				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
-					log.Printf("fail: rows.Close(), %v\n", err)
-				}
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			rows3, err := db.Query("SELECT id, name, description FROM channel WHERE id = ?", cu.ChannelId)
-			if err != nil {
-				log.Printf("fail: db.Query, %v\n", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			var c Channel
-			for rows3.Next() {
-				if err := rows.Scan(&c.Id, &c.Name, &c.Description); err != nil {
-					log.Printf("fail: rows.Scan, %v\n", err)
-
-					if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
-						log.Printf("fail: rows.Close(), %v\n", err)
-					}
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				channels = append(channels, c)
-			}
-		}
-
-		bytes, err := json.Marshal(channels)
-		if err != nil {
-			log.Printf("fail: json.Marshal, %v\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	email := r.URL.Query().Get("email")
+	rows, err := db.Query("SELECT id, name, email FROM user WHERE email = ?", email)
+	if err != nil {
+		log.Printf("fail: db.Query, %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+	var u User
+	for rows.Next() {
+		if err := rows.Scan(&u.Id, &u.Name, &u.Email); err != nil {
+			log.Printf("fail: rows.Scan, %v\n", err)
+
+			if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+				log.Printf("fail: rows.Close(), %v\n", err)
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		break
+	}
+	log.Printf("%v\n", u.Id)
+	rows2, err := db.Query("SELECT id, channel_id FROM channnel_user WHERE user_id = ?", u.Id)
+	if err != nil {
+		log.Printf("fail: db.Query, %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	channels := make([]Channel, 0)
+	var c Channel
+	for rows2.Next() {
+		var cu ChannelUser
+		if err := rows2.Scan(&cu.Id, &cu.ChannelId); err != nil {
+			log.Printf("fail: rows2.Scan, %v\n", err)
+
+			if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+				log.Printf("fail: rows.Close(), %v\n", err)
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		log.Printf("%v\n", cu.ChannelId)
+		rows3, err := db.Query("SELECT id, name, description FROM channel WHERE id = ?", cu.ChannelId)
+		if err != nil {
+			log.Printf("fail: db.Query, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		for rows3.Next() {
+			if err := rows3.Scan(&c.Id, &c.Name, &c.Description); err != nil {
+				log.Printf("fail: rows3.Scan, %v\n", err)
+				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+					log.Printf("fail: rows.Close(), %v\n", err)
+				}
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			log.Printf("%v\n", c.Id)
+			channels = append(channels, c)
+		}
+	}
+
+	bytes, err := json.Marshal(channels)
+	if err != nil {
+		log.Printf("fail: json.Marshal, %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bytes)
+	log.Printf("end getMypage\n")
+	//log.Printf("fail: rows3.Scan, %v, %v, %v\n", c.Id, c.Name, c.Description)
+
+}
+
+func getMessage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	rows, err := db.Query("SELECT id, channel_id, user_id, content FROM message")
+	if err != nil {
+		log.Printf("fail: db.Query, %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	var m Message
+	messages := make([]Message, 0)
+	for rows.Next() {
+		if err := rows.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content); err != nil {
+			log.Printf("fail: rows.Scan, %v\n", err)
+			if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+				log.Printf("fail: rows.Close(), %v\n", err)
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		//log.Printf("%v, %v, %v, %v", m.Id, m.ChannelId, m.UserId, m.Content)
+		messages = append(messages, m)
+	}
+	bytes, err := json.Marshal(messages)
+	if err != nil {
+		log.Printf("fail: json.Marshal, %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bytes)
+	//log.Printf("end /message")
+	return
 }
 
 func messageHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
 	channelId := r.URL.Query().Get("channelId")
 	switch r.Method {
 	case http.MethodGet:
@@ -250,6 +312,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(bytes)
 	case http.MethodPost:
 		email := r.URL.Query().Get("email")
+		log.Printf("%v\n", email)
 		rows, err := db.Query("SELECT id, name, email FROM user WHERE email = ?", email)
 		if err != nil {
 			log.Printf("fail: db.Query, %v\n", err)
@@ -269,7 +332,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			break
 		}
-		var content string
+		var content postMessage
 		if err := json.NewDecoder(r.Body).Decode(&content); err != nil {
 			fmt.Println(err)
 			return
@@ -281,9 +344,9 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		if er != nil {
 			log.Fatal(er)
 		}
-		_, err = db.Query("INSERT INTO message (id, channel_id, user_id, content) VALUES (?, ?, ?, ?)", id.String(), channelId, u.Id, content)
+		_, err = db.Query("INSERT INTO message (id, channel_id, user_id, content) VALUES (?, ?, ?, ?)", id.String(), channelId, u.Id, content.Content)
 		if err != nil {
-			log.Printf("fail: db.Query, %v\n", err)
+			log.Printf("fail:insert db.Query, %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -296,8 +359,11 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func editMessageHnadler(w http.ResponseWriter, r *http.Request) {
-	var m Message
-	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
+	var e Edit
+	if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -305,7 +371,10 @@ func editMessageHnadler(w http.ResponseWriter, r *http.Request) {
 	if er != nil {
 		log.Fatal(er)
 	}
-	_, err := db.Query("UPDATE message SET content = ? WHERE id = ?", m.Content+"(編集済み)", m.Id)
+	message := "(編集済み)"
+	addMessage := e.Message + message
+	log.Printf("%v\n", addMessage)
+	_, err := db.Query("UPDATE message SET content = ? WHERE id = ?", addMessage, e.Id)
 	if err != nil {
 		log.Println("insert error")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -316,8 +385,11 @@ func editMessageHnadler(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteMessageHandler(w http.ResponseWriter, r *http.Request) {
-	var m Message
-	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
+	var d deleteId
+	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -325,7 +397,7 @@ func deleteMessageHandler(w http.ResponseWriter, r *http.Request) {
 	if er != nil {
 		log.Fatal(er)
 	}
-	_, err := db.Query("DELETE FROM message WHERE id = ?", m.Id)
+	_, err := db.Query("DELETE FROM message WHERE id = ?", d.Id)
 	if err != nil {
 		log.Println("insert error")
 		w.WriteHeader(http.StatusInternalServerError)

@@ -29,7 +29,7 @@ const Login: React.FC = () => {
   return (
     <>
       {user ? (
-        <Navigate to={`/`} />
+        <Navigate to={`/${user.email}`} />
       ) : (
         <>
           <h1>ログインページ</h1>

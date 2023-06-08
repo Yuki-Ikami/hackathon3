@@ -6,13 +6,14 @@ import { Navigate, Link } from "react-router-dom";
 const Register: React.FC = () => {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
-  const [registerName, setRegisterName] = useState("")
+  const [registerName, setRegisterName] = useState("");
+  const [user, setUser] = useState<any>("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!registerName) {
-      alert("Please enter name");
+      alert("Please enter a name");
       return;
     }
 
@@ -23,24 +24,33 @@ const Register: React.FC = () => {
 
     try {
       await createUserWithEmailAndPassword(auth, registerEmail, registerPassword);
+      await fetchUsers();
     } catch (error) {
-      alert("正しく入力してください");
+      alert("Failed to register. Please check your input.");
     }
-    const fetchUsers = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/user");
-        if (!res.ok) {
-          throw Error(`Failed to fetch users: ${res.status}`);
-        }
-        const users = await res.json();
-        setUser(users);
-      } catch (err) {
-        console.error(err+"1");
-      }
-    };
   };
 
-  const [user, setUser] = useState<any>("");
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/register", {
+        method: "POST",
+        body: JSON.stringify({
+          email: registerEmail,
+          password: registerPassword,
+          name: registerName
+        }),
+      });
+
+      if (!res.ok) {
+        throw Error(`Failed to fetch users: ${res.status}`);
+      }
+
+      const users = await res.json();
+      setUser(users);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     onAuthStateChanged(auth, (currentUser) => {
@@ -51,14 +61,15 @@ const Register: React.FC = () => {
   return (
     <>
       {user ? (
-        <Navigate to={`/`} />
+        <Navigate to={`/${user.email}`} />
       ) : (
         <>
           <h1>新規登録</h1>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleRegisterSubmit}>
             <div>
-              <label>メールアドレス</label>
+              <label htmlFor="email">メールアドレス</label>
               <input
+                id="email"
                 name="email"
                 type="email"
                 value={registerEmail}
@@ -66,24 +77,29 @@ const Register: React.FC = () => {
               />
             </div>
             <div>
-              <label>パスワード</label>
+              <label htmlFor="password">パスワード</label>
               <input
+                id="password"
                 name="password"
                 type="password"
                 value={registerPassword}
+                autoComplete="new-password"
                 onChange={(e) => setRegisterPassword(e.target.value)}
               />
             </div>
             <div>
-              <label>名前</label>
+              <label htmlFor="name">名前</label>
               <input
+                id="name"
                 name="name"
                 type="name"
                 value={registerName}
                 onChange={(e) => setRegisterName(e.target.value)}
               />
             </div>
-            <button>登録する</button>
+            <button type="button" onClick={handleRegisterSubmit}>
+              登録する
+            </button>
             <p>
               ログインは<Link to={`/login/`}>こちら</Link>
             </p>

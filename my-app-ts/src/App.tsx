@@ -6,7 +6,7 @@ import Mypage from "./Mypage";
 import Channel from "./Channel";
 
 
-const App: React.FC = () => {
+function App() {
   return (
     <div className="container">
       <BrowserRouter>
@@ -19,6 +19,22 @@ const App: React.FC = () => {
       </BrowserRouter>
     </div>
   );
-};
+}
+
+function Home() {
+  return <h2>Home</h2>;
+}
+
+function About() {
+  return <h2>About</h2>;
+}
+
+function Contact() {
+  return <h2>Contact</h2>;
+}
+
+function NotFound() {
+  return <h2>Not Found Page</h2>;
+}
 
 export default App;

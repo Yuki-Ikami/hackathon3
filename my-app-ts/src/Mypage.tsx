@@ -21,7 +21,6 @@ type Channel = {
 const Mypage: React.FC = () => {
   const [user, setUser] = useState<any>("");
   const [loading, setLoading] = useState(true);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
   const { email } = useParams();
 
@@ -43,7 +42,7 @@ const Mypage: React.FC = () => {
 
   /*const fetchMessages = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/message`);
+      const res = await fetch(`http://localhost:8080/message`);
       if (!res.ok) {
         throw Error(`Failed to fetch users: ${res.status}`);
       }
@@ -60,7 +59,7 @@ const Mypage: React.FC = () => {
 
   const fetchChannels = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/mypage?email=${email}`);
+      const res = await fetch(`http://localhost:8080/mypage?email=${email}`);
       if (!res.ok) {
         throw Error(`Failed to fetch users: ${res.status}`);
       }

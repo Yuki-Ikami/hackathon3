@@ -6,19 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="c7235074-8489-4fcd-92a4-0ea48a1cef82" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hackathon/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/hackathon/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hackathon/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/hackathon/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hackathon/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/hackathon/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/.env" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app-ts/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app-ts/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app-ts/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/src/Chat.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/src/Login.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/src/Mypage.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/src/Register.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/src/firebase.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app-ts/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/my-app-ts/src/index.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,7 +35,8 @@
     &quot;last_opened_file_path&quot;: &quot;/Users/ikamiyuki&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/ikamiyuki/hackathon3/my-app-ts/node_modules/typescript/lib&quot;
   }
 }</component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />

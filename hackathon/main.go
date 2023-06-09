@@ -379,6 +379,7 @@ func editMessageHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
+	log.Printf("%v, %v\n", e.Id, e.Message)
 	tx, er := db.Begin()
 	if er != nil {
 		log.Fatal(er)

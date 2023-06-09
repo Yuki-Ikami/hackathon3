@@ -65,13 +65,13 @@ var db *sql.DB
 
 func init() {
 	// DB接続のための準備
-    mysqlUser := os.Getenv("MYSQL_USER")
-    mysqlPwd := os.Getenv("MYSQL_PWD")
-    mysqlHost := os.Getenv("MYSQL_HOST")
-    mysqlDatabase := os.Getenv("MYSQL_DATABASE")
+	mysqlUser := os.Getenv("MYSQL_USER")
+	mysqlPwd := os.Getenv("MYSQL_PWD")
+	mysqlHost := os.Getenv("MYSQL_HOST")
+	mysqlDatabase := os.Getenv("MYSQL_DATABASE")
 
-    connStr := fmt.Sprintf("%s:%s@%s/%s", mysqlUser, mysqlPwd, mysqlHost, mysqlDatabase)
-    _db, err := sql.Open("mysql", connStr)
+	connStr := fmt.Sprintf("%s:%s@%s/%s", mysqlUser, mysqlPwd, mysqlHost, mysqlDatabase)
+	_db, err := sql.Open("mysql", connStr)
 	if err != nil {
 		log.Fatalf("fail: sql.Open, %v\n", err)
 	}
@@ -175,6 +175,7 @@ func getMypageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	email := r.URL.Query().Get("email")
+	log.Println("%v\n", email)
 	rows, err := db.Query("SELECT id, name, email FROM user WHERE email = ?", email)
 	if err != nil {
 		log.Printf("fail: db.Query, %v\n", err)
@@ -194,6 +195,7 @@ func getMypageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		break
 	}
+	log.Printf("%v", u.Id)
 	rows2, err := db.Query("SELECT id, channel_id FROM channnel_user WHERE user_id = ?", u.Id)
 	if err != nil {
 		log.Printf("fail: db.Query, %v\n", err)

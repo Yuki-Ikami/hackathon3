@@ -92,7 +92,7 @@ func main() {
 	//Post:channle_idからmessageを追加
 	http.HandleFunc("/channel", messageHandler)
 	//messageを編集
-	http.HandleFunc("/edit", editMessageHnadler)
+	http.HandleFunc("/edit", editMessageHandler)
 	//messageを削除
 	http.HandleFunc("/delete", deleteMessageHandler)
 	//channelを作る
@@ -367,7 +367,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func editMessageHnadler(w http.ResponseWriter, r *http.Request) {
+func editMessageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "*")

@@ -125,12 +125,12 @@ const Channel: React.FC = () => {
 
   const logout = async () => {
     await signOut(auth);
-    navigate("/login/");
+    navigate("/");
   };
 
   const fetchChannels = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/message?channelId=${channel_id}?email=${email}`);
+      const res = await fetch(`http://localhost:8080/message?channelId=${channel_id}&email=${email}`);
       if (!res.ok) {
         throw Error(`Failed to fetch users: ${res.status}`);
       }
@@ -150,7 +150,7 @@ const Channel: React.FC = () => {
       {!loading && (
         <>
           {!user ? (
-            <Navigate to={`/login/`} />
+            <Navigate to={`/`} />
           ) : (
             <>
               <h1>マイページ</h1>

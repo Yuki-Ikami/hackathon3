@@ -38,7 +38,7 @@ const Mypage: React.FC = () => {
 
   const fetchChannels = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/mypage?email=${email}`);
+      const res = await fetch(`https://hackathon3-1-ck46de3i3a-uc.a.run.app/mypage?email=${email}`);
       if (!res.ok) {
         throw Error(`Failed to fetch users: ${res.status}`);
       }
@@ -72,7 +72,7 @@ const Mypage: React.FC = () => {
     }
 
     try {
-      const result = await fetch(`http://localhost:8080/makeChannel?email=${email}`, {
+      const result = await fetch(`https://hackathon3-1-ck46de3i3a-uc.a.run.app/makeChannel?email=${email}`, {
         method: "POST",
         body: JSON.stringify({
           name: channelname,
@@ -100,7 +100,7 @@ const Mypage: React.FC = () => {
     }
 
     try {
-      const result = await fetch(`http://localhost:8080/joinChannel?email=${email}`, {
+      const result = await fetch(`https://hackathon3-1-ck46de3i3a-uc.a.run.app/joinChannel?email=${email}`, {
         method: "POST",
         body: JSON.stringify({
           channel_id: channelId

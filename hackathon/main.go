@@ -371,6 +371,7 @@ func editMessageHnadler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "*")
+	log.Println("/edit")
 	var e Edit
 	if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
 		fmt.Println(err)

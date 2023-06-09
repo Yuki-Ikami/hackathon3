@@ -3,14 +3,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebase";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
-import { BrowserRouter, Route, Routes, Link } from "react-router-dom";
-
-type Message = {
-  id: string;
-  channel_id: string;
-  user_id: string;
-  content: string;
-};
+import { Link } from "react-router-dom";
 
 type Channel = {
   id: string;
@@ -55,7 +48,7 @@ const Mypage: React.FC = () => {
       console.error(err + "1");
     }
   };
-//
+
   useEffect(() => {
     fetchChannels();
   }, []);
@@ -63,8 +56,18 @@ const Mypage: React.FC = () => {
   const makeChannel = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (channelname.length == 0) {
-      alert("Please enter name");
+    if (channelname.length === 0) {
+      alert("Please enter a channel name");
+      return;
+    }
+
+    if (channelname.length > 50) {
+      alert("Please enter a channel name shorter than 50 characters");
+      return;
+    }
+
+    if (channelDescription.length === 0) {
+      alert("Please enter a channel description");
       return;
     }
 
@@ -91,7 +94,7 @@ const Mypage: React.FC = () => {
   const joinChannel = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (channelId.length != 26) {
+    if (channelId.length !== 26) {
       alert("Please enter correct ID");
       return;
     }
@@ -122,14 +125,18 @@ const Mypage: React.FC = () => {
             <Navigate to={`/`} />
           ) : (
             <>
-              <h1>マイページ</h1>
+              <h1>Channels</h1>
               <p>{user && user.email}</p>
         <ul>
             {channels.map((channel: Channel) => (
-              <h6 key = {channel.id}>
-              {channel.id}, {channel.name}, {channel.description}
-              <Link to={`/channel/${channel.id}/${user.email}`}>{channel.name}</Link>
-              </h6>
+              <div key = {channel.id}>
+                <h4>
+                  <Link to={`/channel/${channel.id}/${user.email}`}>Channel name: {channel.name}</Link>
+                </h4>
+                <h6>
+                id: {channel.id}, description: {channel.description}
+                </h6>
+              </div>
           ))}
         </ul>
         <form onSubmit={makeChannel}>

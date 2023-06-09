@@ -67,3 +67,7 @@ button:hover {
   cursor: pointer;
   opacity: 0.7;
 }
+
+.cannelMap {
+  padding: 10px;
+}

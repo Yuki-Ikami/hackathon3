@@ -68,6 +68,7 @@ button:hover {
   opacity: 0.7;
 }
 
-.cannelMap {
-  padding: 10px;
+.Map {
+  padding: 5px;
+  background-color: #fff;
 }

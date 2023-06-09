@@ -374,20 +374,22 @@ func editMessageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "*")
 	log.Println("/edit")
-	var e Edit
+	id := r.URL.Query().Get("id")
+	editmessage := r.URL.Query().Get("message")
+	/*var e Edit
 	if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
 		fmt.Println(err)
 		return
 	}
-	log.Printf("%v, %v\n", e.Id, e.Message)
+	log.Printf("%v, %v\n", e.Id, e.Message)*/
 	tx, er := db.Begin()
 	if er != nil {
 		log.Fatal(er)
 	}
 	message := "(編集済み)"
-	addMessage := e.Message + message
+	addMessage := editmessage + message
 	log.Printf("%v\n", addMessage)
-	_, err := db.Query("UPDATE message SET content = ? WHERE id = ?", addMessage, e.Id)
+	_, err := db.Query("UPDATE message SET content = ? WHERE id = ?", addMessage, id)
 	if err != nil {
 		log.Println("insert error")
 		w.WriteHeader(http.StatusInternalServerError)

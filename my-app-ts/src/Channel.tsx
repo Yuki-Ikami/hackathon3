@@ -65,13 +65,13 @@ const Channel: React.FC = () => {
     }
 
     try {
-      const result = await fetch("https://hackathon3-1-ck46de3i3a-uc.a.run.app/edit", {
+      const result = await fetch(`https://hackathon3-1-ck46de3i3a-uc.a.run.app/edit?id=${editId}&message=${editedMessage}`/*, {
         method: "EDIT",
         body: JSON.stringify({
           id: editId,
           message: editedMessage
         }),
-      });
+      }*/);
       if (!result.ok) {
         throw Error(`Failed to create user: ${result.status}`);
       }

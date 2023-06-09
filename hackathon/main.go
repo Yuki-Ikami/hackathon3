@@ -89,7 +89,7 @@ func main() {
 	http.HandleFunc("/mypage", getMypageHandler)
 	http.HandleFunc("/message", getMessage)
 	//Get:channel_idからmessageを表示
-	//Post:channle_idからmessageを追加
+	//Post:channel_idからmessageを追加
 	http.HandleFunc("/channel", messageHandler)
 	//messageを編集
 	http.HandleFunc("/edit", editMessageHandler)
@@ -245,7 +245,7 @@ func getMypageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(bytes)
 	//log.Printf("end getMypage\n")
 	//log.Printf("fail: rows3.Scan, %v, %v, %v\n", c.Id, c.Name, c.Description)
-
+	return
 }
 
 func getMessage(w http.ResponseWriter, r *http.Request) {
@@ -320,6 +320,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(bytes)
+		return
 	case http.MethodPost:
 		email := r.URL.Query().Get("email")
 		rows, err := db.Query("SELECT id, name, email FROM user WHERE email = ?", email)
@@ -360,6 +361,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tx.Commit()
+		return
 	default:
 		log.Printf("fail: HTTP Method is %s\n", r.Method)
 		w.WriteHeader(http.StatusBadRequest)
@@ -392,6 +394,7 @@ func editMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tx.Commit()
+	return
 }
 
 func deleteMessageHandler(w http.ResponseWriter, r *http.Request) {
@@ -415,6 +418,7 @@ func deleteMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tx.Commit()
+	return
 }
 
 func makeChannelHandler(w http.ResponseWriter, r *http.Request) {
@@ -474,6 +478,7 @@ func makeChannelHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tx.Commit()
+	return
 }
 
 func joinChannelHandler(w http.ResponseWriter, r *http.Request) {
@@ -519,4 +524,5 @@ func joinChannelHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tx.Commit()
+	return
 }

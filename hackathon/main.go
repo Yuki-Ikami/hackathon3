@@ -135,6 +135,7 @@ func addUserHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			return
 		}
+		log.Printf("%v, %v\n", user.Name, user.Email)
 		t := time.Now()
 		entropy := ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0)
 		id := ulid.MustNew(ulid.Timestamp(t), entropy)
@@ -150,7 +151,7 @@ func addUserHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tx.Commit()
-		//log.Printf("id: %v\n", id.String())
+		log.Printf("id: %v\n", id.String())
 		s := User{
 			Id: id.String(),
 		}

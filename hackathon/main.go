@@ -125,6 +125,9 @@ func closeDBWithSysCall() {
 }
 
 func addUserHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
 	switch r.Method {
 	case http.MethodPost:
 		var user User2
@@ -245,7 +248,7 @@ func getMypageHandler(w http.ResponseWriter, r *http.Request) {
 func getMessage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
 	channel_id := r.URL.Query().Get("channelId")
 	rows, err := db.Query("SELECT id, channel_id, user_id, content FROM message WHERE channel_id= ?", channel_id)
 	if err != nil {

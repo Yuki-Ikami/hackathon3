@@ -155,12 +155,14 @@ const Channel: React.FC = () => {
               <p>{user && user.email}</p>
               <ul>
             {messages.map((message: Message) => (
-              <div className="messageMap"  key = {message.id}>
+              <div key = {message.id}>
+                <div className="Map">
                 <h4>message id: {message.id}</h4>
                 <h4>post user id: {message.user_id}</h4>
                 <h2>
                   {message.content}
                 </h2>
+                </div>
               </div>
           ))}
         </ul>

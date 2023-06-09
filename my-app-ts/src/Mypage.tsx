@@ -130,12 +130,14 @@ const Mypage: React.FC = () => {
         <ul>
             {channels.map((channel: Channel) => (
               <div key = {channel.id}>
+              <div className="Map">
                 <h4>
                   <Link to={`/channel/${channel.id}/${user.email}`}>Channel name: {channel.name}</Link>
                 </h4>
                 <h6>
                 id: {channel.id}, description: {channel.description}
                 </h6>
+              </div>
               </div>
           ))}
         </ul>

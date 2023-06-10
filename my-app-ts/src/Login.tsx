@@ -11,6 +11,16 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!loginEmail) {
+      alert("Please enter a email");
+      return;
+    }
+
+    if (!loginEmail) {
+      alert("Please enter a email");
+      return;
+    }
+
     try {
       await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
     } catch (error) {

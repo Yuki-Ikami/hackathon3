@@ -12,6 +12,16 @@ const Register: React.FC = () => {
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!registerEmail) {
+      alert("Please enter a email");
+      return;
+    }
+
+    if (!registerPassword) {
+      alert("Please enter a password");
+      return;
+    }
+
     if (!registerName) {
       alert("Please enter a name");
       return;

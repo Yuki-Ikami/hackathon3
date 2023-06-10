@@ -111,7 +111,7 @@ const Register: React.FC = () => {
               登録する
             </button>
             <p>
-              ログインは<Link to={`/login/`}>こちら</Link>
+              ログインは<Link to={`/`}>こちら</Link>
             </p>
           </form>
         </>
